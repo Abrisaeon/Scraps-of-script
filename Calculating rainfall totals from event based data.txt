@@ -1,0 +1,39 @@
+Summarizing event based HOBOWare rainfall data by day
+
+Abri de Buys & Sedzani Mahuluhulu
+July 2016
+----------------------------------------------------------------------------------------------------------
+#Set your working directory
+setwd("C:/Users/ABRI/Downloads")
+
+#Read in the raw .csv file as it has been exported from the ObsDB for example:
+dat<-read.csv("15B.csv",skip=0)
+
+#Clean the date column so that it contains only the date in yyyy-mm-dd format
+dat$Date <- sapply(dat$Date, substring, 0, 10)
+
+#Specify a format for the date
+dat$Date <- strptime(dat$Date, "%Y-%m-%d")
+
+#Create a column called "Dates" that includes only the month and day if you want to calculate daily totals (or the year and month if you want monthly totals)
+dat$Dates <- as.factor(format(dat$Date,'%m%d'))   #daily
+dat$Dates <- as.factor(format(dat$Date,'%Y%m'))   #monthly
+
+#Select the columns you want to use and delete the rest from you dataframe
+dat<-subset(dat, select = c(Dates,DataValue))
+
+#Make NA zero so that values can be summed
+dat$DataValue[is.na(dat$DataValue)] <- 0
+
+#Create a dataframe x with "DataValue" summed by "Dates"
+x<-ddply(dat,.(Dates),summarise, DataValue = sum(DataValue))
+
+
+
+Plot15B<-ggplot(x, aes(x=Dates, y=DataValue)) + geom_bar(stat="identity", colour="black") + ylim(c(0, 70)) + ggtitle("15B_Lambrechtbos monthly")
+
+
+grid.arrange(Plot15B, ncol=1, nrow=3)
+
+#TO MERGE TO DATAFRAMES BY DATE
+dailyprec=merge(x = fogday, y = rainday, by = "day", all=TRUE)
